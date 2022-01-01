@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:google_translate/view/dropdown_button_view.dart';
+import 'package:google_translate/view/inputfield_view.dart';
+import 'package:google_translate/view/recent_translations_view.dart';
 import 'package:google_translate/view/translated_text_view.dart';
 import 'package:translator/translator.dart';
+import 'package:google_translate/const/language_codes.dart';
 //import 'package:shared_preferences/shared_preferences.dart';
 
 class MainTranslatePage extends StatefulWidget {
@@ -16,24 +20,9 @@ class MainTranslatePageState extends State<MainTranslatePage> {
   var translatedText = "";
   List<String> recentTranslationsList = [];
   List<String> recentTypedTextList = [];
-
-
-  String fromLanguage = 'English';
-  var fromLanguageList = [
-    'English',
-    'Norwegian',
-    'Russian',
-    'Japanese',
-    'French'
-  ];
-  String toLanguage = 'Norwegian';
-  var toLanguageList = [
-    'Norwegian',
-    'English',
-    'Russian',
-    'Japanese',
-    'French'
-  ];
+  String fromLanguage = langs.values.first;
+  String toLanguage =
+      langs.values.firstWhere((element) => element == "English");
 
 /*
   SharedPreferences? preferences;
@@ -55,11 +44,23 @@ class MainTranslatePageState extends State<MainTranslatePage> {
       });
       return;
     }
+
+    String _chooseLanguage(String languageName) {
+      var languageCode = "";
+      var languageMap =
+          langs.entries.firstWhere((element) => element.value == languageName);
+      languageCode = languageMap.key;
+
+      return languageCode;
+    }
+
     //0.5 seconds delay before translating text after user input.
     Future.delayed(Duration(milliseconds: 500), () async {
       if (newValue == _textFieldController.text) {
         await translator
-            .translate(_textFieldController.text, from: 'en', to: 'no')
+            .translate(_textFieldController.text,
+                from: _chooseLanguage(fromLanguage),
+                to: _chooseLanguage(toLanguage))
             .then((value) {
           setState(() {
             translatedText = value.text;
@@ -75,97 +76,23 @@ class MainTranslatePageState extends State<MainTranslatePage> {
     });
   }
 
-//Recent translated text list
-  Widget _recentTranslationsListView() {
-    return NotificationListener(
-      //On Scroll, removes keyboard.
-      onNotification: (notification) {
-        if (notification is ScrollStartNotification) {
-          FocusScope.of(context).unfocus();
-        }
-        return true;
-      },
-      child: Expanded(
-        child: ListView.separated(
-          itemCount: recentTranslationsList.length,
-          itemBuilder: (context, index) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              child: ListTile(
-                tileColor: Colors.white,
-                title: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      recentTranslationsList[index],
-                    ),
-                    Text(
-                      recentTypedTextList[index],
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ],
-                ),
-                trailing: GestureDetector(
-                  child: Container(
-                    color: Colors.transparent,
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Icon(Icons.star_border),
-                    ),
-                  ),
-                ),
-              ),
-            );
-          },
-          separatorBuilder: (context, index) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              child: Divider(
-                height: 0,
-              ),
-            );
-          },
-        ),
-      ),
-    );
+  void _submit(String newValue) {
+    setState(() {
+      translatedText = '';
+      _textFieldController.clear();
+    });
   }
 
-  //input_field
-  Widget _inputField() {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: TextField(
-        textInputAction: TextInputAction.go,
-        controller: _textFieldController,
-        //translate func runs here when textfield changes.
-        onChanged: _translate,
-        maxLines: 5,
-        minLines: 5,
-        decoration: InputDecoration(
-          hintText: 'Enter text',
-          fillColor: Colors.white,
-          filled: true,
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10.0),
-            //removes the default borderline
-            borderSide: BorderSide(width: 0, style: BorderStyle.none),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10.0),
-            borderSide: BorderSide(width: 0, style: BorderStyle.none),
-          ),
-        ),
-        onSubmitted: (newValue) {
-          setState(() {
-            translatedText = '';
-            _textFieldController.clear();
-          });
-        },
-      ),
-    );
+  void _onSubmitToLang(String? newValue) {
+    setState(() {
+      toLanguage = newValue!;
+    });
+  }
+
+  void _onSubmitFromLang(String? newValue) {
+    setState(() {
+      fromLanguage = newValue!;
+    });
   }
 
   @override
@@ -184,61 +111,43 @@ class MainTranslatePageState extends State<MainTranslatePage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                DropdownButton(
-                  // Initial Value
-                  value: fromLanguage,
-                  // Down Arrow Icon
-                  icon: const Icon(Icons.keyboard_arrow_down),
-                  // Array list of items
-                  items: fromLanguageList.map((String items) {
-                    return DropdownMenuItem(
-                      value: items,
-                      child: Text(items),
-                    );
-                  }).toList(),
-                  // After selecting the desired option,it will
-                  // change button value to selected value
-                  onChanged: (String? newValue) {
+                DropDownButtonView(fromLanguage, langs, _onSubmitFromLang),
+                SizedBox(
+                  width: 10,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.autorenew),
+                  onPressed: () {
                     setState(() {
-                      fromLanguage = newValue!;
+                      var toLang = toLanguage;
+                      var fromLang = fromLanguage;
+                      fromLanguage = toLang;
+                      toLanguage = fromLang;
                     });
                   },
                 ),
+                //Icon(Icons.autorenew),
                 SizedBox(
-                  width: 50,
+                  width: 10,
                 ),
-                Icon(Icons.autorenew),
-                SizedBox(
-                  width: 50,
-                ),
-                DropdownButton(
-                  // Initial Value
-                  value: toLanguage,
-                  // Down Arrow Icon
-                  icon: const Icon(Icons.keyboard_arrow_down),
-                  // Array list of items
-                  items: toLanguageList.map((String items) {
-                    return DropdownMenuItem(
-                      value: items,
-                      child: Text(items),
-                    );
-                  }).toList(),
-                  // After selecting the desired option,it will
-                  // change button value to selected value
-                  onChanged: (String? newValue) {
-                    setState(() {
-                      toLanguage = newValue!;
-                    });
-                  },
-                ),
+                DropDownButtonView(toLanguage, langs, _onSubmitToLang),
               ],
             ),
             Divider(),
-            _inputField(),
+            InputFieldView(_translate, _submit, _textFieldController),
             Divider(),
-            TranslatedTextView(_textFieldController.text, translatedText),
-            Divider(),
-            _recentTranslationsListView(),
+            if (translatedText.isNotEmpty) ...[
+              TranslatedTextView(
+                _textFieldController.text,
+                translatedText,
+                toLanguage,
+              ),
+              Divider(),
+            ],
+            if (recentTranslationsList.isNotEmpty) ...[
+              RecentTranslationsView(
+                  recentTranslationsList, recentTypedTextList),
+            ],
           ],
         ),
       ),

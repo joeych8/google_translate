@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
-
 class TranslatedTextView extends StatelessWidget {
-
   String textToBeTranslated;
   String translatedText;
+  String translatedLanguageLabel;
 
-  TranslatedTextView(this.textToBeTranslated, this.translatedText);
+  TranslatedTextView(this.textToBeTranslated, this.translatedText,
+      this.translatedLanguageLabel);
 
   @override
   Widget build(BuildContext context) {
@@ -25,14 +25,14 @@ class TranslatedTextView extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Language',
+                    translatedLanguageLabel,
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 15,
                     ),
                   ),
                   SizedBox(
-                    height: 10,
+                    height: 15,
                   ),
                   Text(
                     translatedText,
