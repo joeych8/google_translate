@@ -1,4 +1,3 @@
-# google_translate
+# Google translate for android and iOS
 
-A new Flutter project.
-
+An Assignment from my app programming studies.
